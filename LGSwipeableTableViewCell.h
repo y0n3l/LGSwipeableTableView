@@ -16,10 +16,18 @@ typedef NS_ENUM(NSInteger, LGSwipeDirection)  {
 
 @protocol LGSwipeableTableViewCellDelegate <NSObject>
 -(void) swipeableTableViewCellDidBeginDragging:(LGSwipeableTableViewCell*)swipeableCell;
+@optional
+-(void) swipeableTableViewCell:(LGSwipeableTableViewCell*)swipeableCell isSwipingToOffset:(NSInteger)swipeOffset;
 -(void) swipeableTableViewCellDidExpand:(LGSwipeableTableViewCell*)swipeableCell;
 -(void) swipeableTableViewCellDidCollapse:(LGSwipeableTableViewCell*)swipeableCell;
 @end
 
+/**
+ +-------------+
+ |
+ |             |
+ +-------------+
+ */
 @interface LGSwipeableTableViewCell : UITableViewCell <UIScrollViewDelegate> {
     IBOutlet UIView* _actionsView;
     IBOutlet UIView* _swipeableContentView;
@@ -31,7 +39,7 @@ typedef NS_ENUM(NSInteger, LGSwipeDirection)  {
      `YES` will trigger an animation to make the scrollView go until the proper content offset. */ 
     BOOL _shouldFinishDragProperly;
     
-    id<LGSwipeableTableViewCellDelegate> _delegate;
+    id<LGSwipeableTableViewCellDelegate> _swipeDelegate;
 }
 
 @property (readwrite) BOOL expanded;
@@ -41,8 +49,8 @@ typedef NS_ENUM(NSInteger, LGSwipeDirection)  {
 
 @property (readwrite, retain) UIView* actionsView;
 
-@property (readonly) UIView* swipeableContentView;
+@property (readwrite, retain) UIView* swipeableContentView;
 
-@property (readwrite, assign) id<LGSwipeableTableViewCellDelegate> delegate;
+@property (readwrite, assign) id<LGSwipeableTableViewCellDelegate> swipeDelegate;
 
 @end
