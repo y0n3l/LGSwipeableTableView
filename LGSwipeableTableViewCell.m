@@ -1,6 +1,6 @@
 //
 //  LGSwipeableTableViewCell.m
-// 
+//
 //
 //  Created by Lionel GUEGANTON on 8/07/14.
 //
@@ -17,16 +17,18 @@
 
 -(instancetype) initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
-	if (self ) {
+    if (self ) {
         [self initCommon];
     }
-	return self;
+    return self;
 }
 
 -(instancetype) initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
     if (self) {
         [self initCommon];
+        self.swipeableContentView = _swipeableContentView;
+        self.actionsView = _actionsView;
     }
     return self;
 }
@@ -43,26 +45,16 @@
     _scrollView.delaysContentTouches = YES;
     _scrollView.delegate = self;
     [self.contentView addSubview:_scrollView];
-    
-    if (_swipeableContentView)
-        self.swipeableContentView = _swipeableContentView;
-    else {
-        UIView* swipeableView  = [self createContentViewForFrame:self.frame];
-        if (swipeableView)
-            self.swipeableContentView = swipeableView;
-    }
-    
-    self.actionsView = _actionsView;
 }
 
 -(void) dealloc {
-	[_swipeableContentView release];
+    [_swipeableContentView release];
     _swipeableContentView = nil;
     [_actionsView release];
     _actionsView = nil;
     [_scrollView release];
     _scrollView = nil;
-	_swipeDelegate = nil;
+    _swipeDelegate = nil;
     [super dealloc];
 }
 
@@ -75,17 +67,21 @@
         [_actionsView removeFromSuperview];
         [_actionsView release];
         _actionsView = actionsView;
-        if (_enabledSwipeDirection==LGSwipeDirectionRight) {
-            _offsetCollapsed = CGPointMake(_actionsView.frame.size.width,0);
-            _offsetExpanded = CGPointMake(0, 0);
-        } else {
-            _offsetCollapsed = CGPointMake(0, 0);
-            _offsetExpanded = CGPointMake(_actionsView.frame.size.width,0);
-        }
+        [self valuateOffsets];
         _scrollView.contentSize = CGSizeMake(_actionsView.frame.size.width + self.contentView.frame.size.width,
                                              self.contentView.frame.size.height);
         [self.contentView insertSubview:_actionsView atIndex:0];
         [self setNeedsLayout];
+    }
+}
+
+-(void) valuateOffsets {
+    if (_enabledSwipeDirection==LGSwipeDirectionRight) {
+        _offsetCollapsed = CGPointMake(_actionsView.frame.size.width,0);
+        _offsetExpanded = CGPointMake(0, 0);
+    } else {
+        _offsetCollapsed = CGPointMake(0, 0);
+        _offsetExpanded = CGPointMake(_actionsView.frame.size.width,0);
     }
 }
 
@@ -94,12 +90,14 @@
 }
 
 -(void) setSwipeableContentView:(UIView *)swipeableContentView {
-    [swipeableContentView retain];
-    [_swipeableContentView removeFromSuperview];
-    [_swipeableContentView release];
-    _swipeableContentView = swipeableContentView;
-    [_scrollView addSubview:_swipeableContentView];
-    [self setNeedsLayout];
+    if (swipeableContentView) {
+        [swipeableContentView retain];
+        [_swipeableContentView removeFromSuperview];
+        [_swipeableContentView release];
+        _swipeableContentView = swipeableContentView;
+        [_scrollView addSubview:_swipeableContentView];
+        [self setNeedsLayout];
+    }
 }
 
 -(UIView*) swipeableContentView {
@@ -107,9 +105,9 @@
 }
 
 -(void) awakeFromNib {
+    // in case actions and / or swipeable content view have been valuated in xib.
+    [self setSwipeableContentView:_swipeableContentView];
     [self setActionsView:_actionsView];
-    if (_swipeableContentView)
-        [_scrollView addSubview:_swipeableContentView];
 }
 
 -(UIView*) createContentViewForFrame:(CGRect)frame {
@@ -119,7 +117,7 @@
 #pragma mark -
 
 -(void) layoutSubviews {
-	[super layoutSubviews];
+    [super layoutSubviews];
     self.contentView.frame = CGRectMake(0,0, self.frame.size.width, self.frame.size.height);
     // the scrollView covers the whole contentView.
     _scrollView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
@@ -134,6 +132,8 @@
         _actionsView.frame = CGRectMake(self.contentView.frame.size.width-_actionsView.frame.size.width, 0,
                                         _actionsView.frame.size.width, _actionsView.frame.size.height);
     }
+    // as actionsView frame has changed, we must refresh the offsets
+    [self valuateOffsets];
     _scrollView.contentOffset = _offsetCollapsed;
 }
 
@@ -187,7 +187,7 @@
     //NSLog(@"[LGSwipeableTableViewCell] did end dragging @%@[decelerate:%@] shouldFinishDragProperly:%@", NSStringFromCGPoint(scrollView.contentOffset), (decelerate)?@"YES":@"NO", _shouldFinishDragProperly?@"YES":@"NO");
     if(_shouldFinishDragProperly) {
         if (!_expanded) {
-            CGFloat distanceToCollapsed = abs(scrollView.contentOffset.x - _offsetCollapsed.x);  
+            CGFloat distanceToCollapsed = abs(scrollView.contentOffset.x - _offsetCollapsed.x);
             BOOL shouldBeExpanded = distanceToCollapsed >= kRequiredOffsetBeforeExpanding;
             //NSLog(@"[LGSwipeableTableViewCell] the cell should be expanded %@", shouldBeExpanded?@"YES":@"NO");
             [self setExpanded:shouldBeExpanded];
@@ -236,14 +236,14 @@
 -(void) setExpanded:(BOOL)expanded {
     if (expanded ) {
         /*[UIView animateWithDuration:0.2
-                              delay:0
-                            options:UIViewAnimationCurveEaseOut
-                         animations:^{
-                             [_scrollView setContentOffset:_offsetExpanded animated:NO];
-                         } completion:nil];
-        */
-         // iOS 7 only
-         [UIView animateWithDuration:0.5 delay:0 usingSpringWithDamping:0.4 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
+         delay:0
+         options:UIViewAnimationCurveEaseOut
+         animations:^{
+         [_scrollView setContentOffset:_offsetExpanded animated:NO];
+         } completion:nil];
+         */
+        // iOS 7 only
+        [UIView animateWithDuration:0.5 delay:0 usingSpringWithDamping:0.4 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
             [_scrollView setContentOffset:expanded?_offsetExpanded:_offsetCollapsed animated:NO];
         } completion:nil];
     } else {
