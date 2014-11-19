@@ -235,17 +235,24 @@
 
 -(void) setExpanded:(BOOL)expanded {
     if (expanded ) {
-        /*[UIView animateWithDuration:0.2
-         delay:0
-         options:UIViewAnimationCurveEaseOut
-         animations:^{
-         [_scrollView setContentOffset:_offsetExpanded animated:NO];
-         } completion:nil];
-         */
-        // iOS 7 only
-        [UIView animateWithDuration:0.5 delay:0 usingSpringWithDamping:0.4 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseIn animations:^{
-            [_scrollView setContentOffset:expanded?_offsetExpanded:_offsetCollapsed animated:NO];
-        } completion:nil];
+        // iOS 7+ ?
+        if ([[UIView class] respondsToSelector:@selector(animateWithDuration:delay:usingSpringWithDamping:initialSpringVelocity:options:animations:completion:)]) {
+            [UIView animateWithDuration:0.5
+                                  delay:0
+                 usingSpringWithDamping:0.4
+                  initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionCurveEaseIn
+                             animations:^{
+                                 [_scrollView setContentOffset:expanded?_offsetExpanded:_offsetCollapsed animated:NO];
+                             } completion:nil];
+        } else {
+            [UIView animateWithDuration:0.2
+                                  delay:0
+                                options:UIViewAnimationCurveEaseOut
+                             animations:^{
+                                 [_scrollView setContentOffset:_offsetExpanded animated:NO];
+                             } completion:nil];
+        }
     } else {
         [UIView animateWithDuration:0.2
                               delay:0
