@@ -67,9 +67,6 @@
         [_actionsView removeFromSuperview];
         [_actionsView release];
         _actionsView = actionsView;
-        [self valuateOffsets];
-        _scrollView.contentSize = CGSizeMake(_actionsView.frame.size.width + self.contentView.frame.size.width,
-                                             self.contentView.frame.size.height);
         [self.contentView insertSubview:_actionsView atIndex:0];
         [self setNeedsLayout];
     }
@@ -121,6 +118,8 @@
     self.contentView.frame = CGRectMake(0,0, self.frame.size.width, self.frame.size.height);
     // the scrollView covers the whole contentView.
     _scrollView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+    _scrollView.contentSize = CGSizeMake(_actionsView.frame.size.width + self.contentView.frame.size.width,
+                                         self.contentView.frame.size.height);
     
     if (_enabledSwipeDirection==LGSwipeDirectionRight) {
         _swipeableContentView.frame = CGRectMake(_actionsView.frame.size.width, 0, self.frame.size.width, self.frame.size.height);
