@@ -8,6 +8,7 @@
 #import <UIKit/UIKit.h>
 
 typedef NS_ENUM(NSInteger, LGSwipeDirection)  {
+    LGSwipeDirectionNone,
     LGSwipeDirectionLeft,
     LGSwipeDirectionRight
 };
@@ -29,12 +30,17 @@ typedef NS_ENUM(NSInteger, LGSwipeDirection)  {
  +-------------+
  */
 @interface LGSwipeableTableViewCell : UITableViewCell <UIScrollViewDelegate> {
-    IBOutlet UIView* _actionsView;
+    IBOutlet UIView* _rightSwipeActionView;
+    IBOutlet UIView* _leftSwipeActionsView;
     IBOutlet UIView* _swipeableContentView;
     UIScrollView* _scrollView;
-    CGPoint _offsetExpanded;
-    CGPoint _offsetCollapsed;
-    BOOL _expanded;
+    
+    CGPoint _offsetLeftSwiped;
+    CGPoint _offsetRightSwiped;
+    CGPoint _offsetIdle;
+    
+    LGSwipeDirection _state;
+    
     /** If at the end of the drag, the velocity is not fast enough, setting this flag to
      `YES` will trigger an animation to make the scrollView go until the proper content offset. */ 
     BOOL _shouldFinishDragProperly;
@@ -44,10 +50,14 @@ typedef NS_ENUM(NSInteger, LGSwipeDirection)  {
 
 @property (readwrite) BOOL expanded;
 
-/** Default is right. */
-@property (readwrite) LGSwipeDirection enabledSwipeDirection;
+@property (readwrite) LGSwipeDirection state;
 
-@property (readwrite, retain) UIView* actionsView;
+/** Default is right. */
+//@property (readwrite) LGSwipeDirection enabledSwipeDirection;
+
+@property (readwrite, retain) UIView* rightSwipeActionView;
+
+@property (readwrite, retain) UIView* leftSwipeActionsView;
 
 @property (readwrite, retain) UIView* swipeableContentView;
 
