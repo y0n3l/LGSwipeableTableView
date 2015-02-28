@@ -48,12 +48,7 @@ typedef NS_ENUM(NSInteger, LGSwipeDirection)  {
     id<LGSwipeableTableViewCellDelegate> _swipeDelegate;
 }
 
-@property (readwrite) BOOL expanded;
-
 @property (readwrite) LGSwipeDirection state;
-
-/** Default is right. */
-//@property (readwrite) LGSwipeDirection enabledSwipeDirection;
 
 @property (readwrite, retain) UIView* rightSwipeActionView;
 

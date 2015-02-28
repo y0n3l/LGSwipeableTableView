@@ -192,12 +192,10 @@
     }
     
     //NSLog(@"scroll view content offset : %@", NSStringFromCGPoint(scrollView.contentOffset));
-    // Force the offset so that a swipe in the direction opposite to the configured one is impossible.
-    /*if ((_enabledSwipeDirection==LGSwipeDirectionRight && scrollView.contentOffset.x>_offsetCollapsed.x) ||
-        (_enabledSwipeDirection==LGSwipeDirectionLeft && scrollView.contentOffset.x<_offsetCollapsed.x))
-        scrollView.contentOffset = _offsetCollapsed;
-    
-     */
+    //Force the offset so that a swipe in the direction opposite to the configured one is impossible.
+    if ((!_rightSwipeActionView && scrollView.contentOffset.x<_offsetIdle.x) ||
+        (!_leftSwipeActionsView && scrollView.contentOffset.x>_offsetIdle.x))
+        scrollView.contentOffset = _offsetIdle;
     
     if ((_state==LGSwipeDirectionNone && previousState!=LGSwipeDirectionNone) ||
         (_state!=LGSwipeDirectionNone && previousState==LGSwipeDirectionNone)) {
@@ -217,7 +215,6 @@
 -(void) scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
     // once the drag is ended, we keep the contentOffset where it ended, the rest of the
     // scroll animation is handled by the expand / collapse.
-    //NSLog(@"[LGSwipeableTableViewCell] scrollView willEndDragging velocity:%@ targetContentOffset:%@", NSStringFromCGPoint(velocity), NSStringFromCGPoint(*targetContentOffset));
     // if the velocity is not big enough, we stop the current scroll and will handover the animation
     // on ourselves (set the flag _shouldFinishDragProperly to YES) .
     if (fabsf(velocity.x)<1.5) {
@@ -309,42 +306,6 @@
         }
         
     }
-}
-
-
--(BOOL) expanded {
-    return _state!=LGSwipeDirectionNone;
-}
-
--(void) setExpanded:(BOOL)expanded {
-    if (expanded ) {
-        // iOS 7+ ?
-        /*if ([[UIView class] respondsToSelector:@selector(animateWithDuration:delay:usingSpringWithDamping:initialSpringVelocity:options:animations:completion:)]) {
-            [UIView animateWithDuration:0.5
-                                  delay:0
-                 usingSpringWithDamping:0.4
-                  initialSpringVelocity:0.5
-                                options:UIViewAnimationOptionCurveEaseIn
-                             animations:^{
-                                 [_scrollView setContentOffset:expanded?_offsetExpanded:_offsetCollapsed animated:NO];
-                             } completion:nil];
-        } else {
-            [UIView animateWithDuration:0.2
-                                  delay:0
-                                options:UIViewAnimationCurveEaseOut
-                             animations:^{
-                                 [_scrollView setContentOffset:_offsetExpanded animated:NO];
-                             } completion:nil];
-        }*/
-    } else {
-        [UIView animateWithDuration:0.2
-                              delay:0
-                            options:UIViewAnimationCurveEaseOut
-                         animations:^{
-                             [_scrollView setContentOffset:_offsetIdle animated:NO];
-                         } completion:nil];
-    }
-    
 }
 
 @end
