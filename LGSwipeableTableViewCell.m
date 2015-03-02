@@ -63,24 +63,23 @@
  Adjust expanded / Collapsed offset based on the given actionView + UIView hierarchy
  */
 -(void) valuateOffsets {
-    _offsetIdle = CGPointMake(_rightSwipeActionView.frame.size.width,0);
     _offsetRightSwiped = CGPointMake(0, 0);
-    _offsetLeftSwiped = CGPointMake(_rightSwipeActionView.frame.size.width + _leftSwipeActionsView.frame.size.width, 0);
+    _offsetIdle = CGPointMake(_rightSwipeActionView.frame.size.width,0);
+    _offsetLeftSwiped = CGPointMake(_offsetIdle.x + _leftSwipeActionsView.frame.size.width, 0);
 }
 
 -(void) setActionsView:(UIView*)actionsView right:(BOOL)right {
-    if (actionsView) {
-        [actionsView retain];
-        [right?_rightSwipeActionView:_leftSwipeActionsView removeFromSuperview];
-        [right?_rightSwipeActionView:_leftSwipeActionsView release];
-        if (right) {
-            _rightSwipeActionView = actionsView;
-        } else {
-            _leftSwipeActionsView = actionsView;
-        }
-        [self.contentView insertSubview:actionsView atIndex:0];
-        [self setNeedsLayout];
+    [actionsView retain];
+    [right?_rightSwipeActionView:_leftSwipeActionsView removeFromSuperview];
+    [right?_rightSwipeActionView:_leftSwipeActionsView release];
+    if (right) {
+        _rightSwipeActionView = actionsView;
+    } else {
+        _leftSwipeActionsView = actionsView;
     }
+    if (actionsView)
+        [self.contentView insertSubview:actionsView atIndex:0];
+    [self setNeedsLayout];
 }
 
 -(void) setRightSwipeActionView:(UIView *)rightSwipeActionView {
@@ -174,6 +173,8 @@
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    //NSLog(@"CONTENT OFFSET %@", NSStringFromCGPoint(scrollView.contentOffset));
+    
     LGSwipeDirection previousState = _state;
     if (scrollView.contentOffset.x == _offsetIdle.x) {
         _state = LGSwipeDirectionNone;
@@ -191,7 +192,6 @@
         NSLog(@"SWIPE DIRECTION %@", [LGSwipeableTableViewCell stringFromSwipeDirection:_state]);
     }
     
-    //NSLog(@"scroll view content offset : %@", NSStringFromCGPoint(scrollView.contentOffset));
     //Force the offset so that a swipe in the direction opposite to the configured one is impossible.
     if ((!_rightSwipeActionView && scrollView.contentOffset.x<_offsetIdle.x) ||
         (!_leftSwipeActionsView && scrollView.contentOffset.x>_offsetIdle.x))
@@ -234,12 +234,7 @@
             [self setState:_state];
         else
             [self setState:LGSwipeDirectionNone];
-    } /*else {
-        BOOL shouldBeCollapsed = scrollView.contentOffset.x> kRequiredOffsetBeforeCollapsing;
-        //NSLog(@"[LGSwipeableTableViewCell] the cell should be collapsed %@", shouldBeCollapsed?@"YES":@"NO");
-        [self setExpanded:!shouldBeCollapsed];
     }
-    }*/
 }
 
 -(void) onSwipeToOffset:(NSInteger)swipeOffset {
@@ -249,28 +244,38 @@
 }
 
 #pragma mark -
-/*
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    // are we in the transparent part of the scrollView ?
-    CGFloat expandedWidth = abs(_scrollView.contentOffset.x - _offsetCollapsed.x);
+    //NSLog(@"hit %f/%f right:%f < idle:%f < left:%f", point.x, _scrollView.contentOffset.x, _offsetRightSwiped.x, _offsetIdle.x, _offsetLeftSwiped.x);
     
-    //CGFloat expandedPartWidth = _offsetCollapsed.x - _scrollView.contentOffset.x;
-    BOOL isInTransparentArea =  (_enabledSwipeDirection==LGSwipeDirectionRight && point.x < expandedWidth) ||
-    (_enabledSwipeDirection==LGSwipeDirectionLeft && point.x > (self.contentView.frame.size.width-expandedWidth));
-    //BOOL isInTransparentArea = CGRectContainsPoint(_actionsView.frame, point);
-    if (isInTransparentArea) {
-        CGPoint p = [_actionsView convertPoint:point fromView:self.contentView];
-        UIView* v = [_actionsView hitTest:p withEvent:event];
-        return v;
-    } else {
+    CGRect leftActionsVisibleRect = CGRectMake(0, 0,
+                                               _offsetIdle.x - _scrollView.contentOffset.x,
+                                               _scrollView.frame.size.height);
+    CGRect rightActionsVisibleRect = CGRectMake(_scrollView.frame.size.width - _scrollView.contentOffset.x + _rightSwipeActionView.frame.size.width, 0,
+                                                _scrollView.contentOffset.x - _rightSwipeActionView.frame.size.width,
+                                                _scrollView.frame.size.height);
+    
+    //NSLog(@"left actions visible frame %@", NSStringFromCGRect(leftActionsVisibleRect));
+    //NSLog(@"right actions visible frame %@", NSStringFromCGRect(rightActionsVisibleRect));
+    
+    BOOL leftActionsVisible = (leftActionsVisibleRect.size.width>0);
+    BOOL rightActionsVisible  = (rightActionsVisibleRect.size.width>0);
+    
+    BOOL hitToActionView =
+        (leftActionsVisible && CGRectContainsPoint(leftActionsVisibleRect, point)) ||
+        (rightActionsVisible && CGRectContainsPoint(rightActionsVisibleRect, point));
+    
+    if (!hitToActionView) {
         UIView* returnedBySuper = [super hitTest:point withEvent:event];
-        //NSLog(@"this hit is relative to the station cell %@", returnedBySuper);
         return returnedBySuper;
+    } else {
+        UIView* candidateActionView = (_state==LGSwipeDirectionLeft)?_leftSwipeActionsView:_rightSwipeActionView;
+        CGPoint p = [candidateActionView convertPoint:point fromView:self.contentView];
+        UIView* v = [candidateActionView hitTest:p withEvent:event];
+        return v;
     }
-    //NSLog(@"HIT TEST expanded width %f", expandedPartWidth);
+    
     //return [super hitTest:point withEvent:event];
 }
- */
 
 #pragma mark - Expanded handling
 -(LGSwipeDirection) state {
