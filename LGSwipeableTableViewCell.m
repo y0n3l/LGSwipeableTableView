@@ -189,7 +189,7 @@
     }
     
     if (_state!=previousState) {
-        NSLog(@"SWIPE DIRECTION %@", [LGSwipeableTableViewCell stringFromSwipeDirection:_state]);
+        //NSLog(@"SWIPE DIRECTION %@", [LGSwipeableTableViewCell stringFromSwipeDirection:_state]);
     }
     
     //Force the offset so that a swipe in the direction opposite to the configured one is impossible.
